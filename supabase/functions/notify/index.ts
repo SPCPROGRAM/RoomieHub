@@ -61,6 +61,9 @@ async function sendToUser(userId: string, message: Message): Promise<number> {
 async function deliver(messages: Map<string, Message>, keyFor: (userId: string) => string) {
   let users = 0;
   for (const [userId, message] of messages) {
+    // no device yet: don't mark it as delivered, so a phone enabled later today still gets it
+    const { count } = await admin.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+    if (!count) continue;
     const { data, error } = await admin
       .from('notification_deliveries')
       .upsert({ user_id: userId, dedupe_key: keyFor(userId) }, { onConflict: 'user_id,dedupe_key', ignoreDuplicates: true })
