@@ -99,7 +99,13 @@ export interface Repository {
 
   // profile
   getProfile(userId: UUID): Promise<Profile | null>;
-  updateProfile(userId: UUID, patch: Partial<Pick<Profile, 'display_name' | 'avatar_color' | 'locale'>>): Promise<void>;
+  updateProfile(userId: UUID, patch: Partial<Pick<Profile, 'display_name' | 'avatar_color' | 'locale' | 'notify_daily' | 'notify_due' | 'notify_damage'>>): Promise<void>;
+
+  // push notifications (this device)
+  savePushSubscription(sub: { endpoint: string; p256dh: string; auth: string; userAgent: string | null }): Promise<void>;
+  deletePushSubscription(endpoint: string): Promise<void>;
+  /** Ask the server to send a test notification to all of my devices; resolves to how many got it. */
+  sendTestNotification(): Promise<number>;
 
   // apartments & membership
   listMyApartments(userId: UUID): Promise<Apartment[]>;

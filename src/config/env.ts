@@ -10,5 +10,7 @@ export const env = {
   supabaseConfigured: /^https?:\/\//.test(url) && anonKey.length > 20,
   // empty → the domain the app is served from (works on any Vercel URL without rebuilding)
   appUrl: ((import.meta.env.VITE_APP_URL ?? '').trim() || (typeof window !== 'undefined' ? window.location.origin : '')).replace(/\/$/, ''),
+  /** Public VAPID key for Web Push (the private key lives only in Supabase secrets). */
+  vapidPublicKey: (import.meta.env.VITE_VAPID_PUBLIC_KEY ?? '').trim(),
   demoEnabled: (import.meta.env.VITE_ENABLE_DEMO ?? 'true') !== 'false',
 } as const;

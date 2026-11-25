@@ -147,6 +147,15 @@ export class DemoRepository implements Repository {
     this.commit();
   }
 
+  // ---------------------------------------------------------------- push (not available in the demo)
+  async savePushSubscription(): Promise<void> {
+    throw new AppError('demo_no_push');
+  }
+  async deletePushSubscription(): Promise<void> {}
+  async sendTestNotification(): Promise<number> {
+    throw new AppError('demo_no_push');
+  }
+
   // ---------------------------------------------------------------- apartments
   async listMyApartments(userId: UUID): Promise<Apartment[]> {
     const ids = new Set(this.db.members.filter((m) => m.user_id === userId && m.left_at === null).map((m) => m.apartment_id));

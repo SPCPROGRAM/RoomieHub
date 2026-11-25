@@ -292,3 +292,35 @@ describe('calendar, maintenance and membership', () => {
     expect(await t.admin('select 1 from chores where apartment_id = $1', [otherApt])).toEqual([]);
   });
 });
+
+describe('push notifications', () => {
+  const ENDPOINT = 'https://push.example.test/abc';
+
+  it('registers a device through the RPC and keeps it private', async () => {
+    await t.as(A, 'select public.save_push_subscription($1, $2, $3, $4)', [ENDPOINT, 'p256', 'authkey', 'Android']);
+    expect(await t.as(A, 'select endpoint from push_subscriptions')).toEqual([{ endpoint: ENDPOINT }]);
+    expect(await t.as(B, 'select endpoint from push_subscriptions')).toEqual([]);
+  });
+
+  it('moves a device to the new user when the same phone subscribes again', async () => {
+    await t.as(B, 'select public.save_push_subscription($1, $2, $3, null)', [ENDPOINT, 'p256', 'authkey']);
+    const [row] = await t.admin<{ user_id: string }>('select user_id from push_subscriptions where endpoint = $1', [ENDPOINT]);
+    expect(row!.user_id).toBe(B);
+  });
+
+  it('does not allow writing subscriptions or the delivery log directly', async () => {
+    await expectError(t.as(A, `insert into push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, 'https://x', 'a', 'b')`, [A]), /permission denied/);
+    await expectError(t.as(A, `select * from notification_deliveries`), /permission denied/);
+  });
+
+  it('lets each person change their own notification preferences', async () => {
+    await t.as(A, 'update profiles set notify_daily = false where id = $1', [A]);
+    const [p] = await t.admin<{ notify_daily: boolean; notify_due: boolean }>('select notify_daily, notify_due from profiles where id = $1', [A]);
+    expect(p).toEqual({ notify_daily: false, notify_due: true });
+  });
+
+  it('never blocks a damage report when the notifier is not configured', async () => {
+    const [r] = await t.as<{ id: string }>(B, `insert into maintenance_reports (apartment_id, title) values ($1, 'Grieta') returning id`, [apt]);
+    expect(r!.id).toBeTruthy();
+  });
+});

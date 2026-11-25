@@ -46,6 +46,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
+        // push notifications + click handling (public/push-sw.js)
+        importScripts: ['push-sw.js'],
         // API traffic (Supabase) is never cached by the service worker: data offline
         // comes from the app's own read-only snapshot, so nothing stale is shown as fresh.
         navigateFallbackDenylist: [/^\/api\//],

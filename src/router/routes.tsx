@@ -20,6 +20,7 @@ const ShoppingPage = lazy(() => import('@/features/shopping/ShoppingPage'));
 const StatsPage = lazy(() => import('@/features/stats/StatsPage'));
 const MaintenancePage = lazy(() => import('@/features/maintenance/MaintenancePage'));
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
+const AboutPage = lazy(() => import('@/features/about/AboutPage'));
 
 export const routes: RouteObject[] = [
   {
@@ -52,6 +53,7 @@ export const routes: RouteObject[] = [
           { path: 'stats', element: <StatsPage /> },
           { path: 'maintenance', element: <MaintenancePage /> },
           { path: 'settings', element: <SettingsPage /> },
+          { path: 'about', element: <AboutPage /> },
         ],
       },
     ],

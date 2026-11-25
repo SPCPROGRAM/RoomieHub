@@ -27,6 +27,7 @@ describe('routing and guards', () => {
       ['/stats', 'Estadísticas'],
       ['/maintenance', 'Reportes de daños'],
       ['/settings', 'Ajustes'],
+      ['/about', 'Información de la app'],
     ] as [string, string][],
   )('renders %s without broken imports', async (path, heading) => {
     await renderApp(path);

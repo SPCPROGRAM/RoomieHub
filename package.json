@@ -1,7 +1,7 @@
 {
   "name": "roomiehub",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.2.0-beta",
   "description": "RoomieHub — Tres personas. Un hogar. Todo organizado.",
   "type": "module",
   "scripts": {

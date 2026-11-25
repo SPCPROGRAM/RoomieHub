@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, Crown, Info, KeyRound, LogOut, Palette, Trash2, UserMinus, UserRound, Users } from 'lucide-react';
+import { Building2, ChevronRight, Crown, Info, KeyRound, LogOut, Palette, Trash2, UserMinus, UserRound, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { APP_VERSION } from '@/config/changelog';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { LanguageSwitch, ThemeSwitch } from '@/components/layout/PreferenceControls';
 import { Avatar } from '@/components/ui/Avatar';
@@ -19,6 +20,7 @@ import { useApartment } from '@/providers/ApartmentProvider';
 import { useAuth } from '@/providers/AuthProvider';
 import { CategoriesCard, ColorPicker } from './CategoriesCard';
 import { InvitesCard } from './InvitesCard';
+import { NotificationsCard } from './NotificationsCard';
 
 function ProfileCard() {
   const { t } = useTranslation();
@@ -273,6 +275,7 @@ export default function SettingsPage() {
               </div>
             </CardBody>
           </Card>
+          <NotificationsCard h={h} />
           <MembersCard />
           <InvitesCard h={h} />
         </div>
@@ -280,16 +283,18 @@ export default function SettingsPage() {
           <ApartmentCard />
           <CategoriesCard h={h} />
           <AccountCard />
-          <Card>
-            <CardHeader title={t('settings.about')} icon={<Info className="h-4.5 w-4.5" />} />
-            <CardBody className="space-y-1 text-sm text-muted">
-              <p>{t('app.tagline')}</p>
-              <p>{t('settings.version', { version: __APP_VERSION__ })}</p>
-              <p>
-                {t('settings.mode')}: {h.mode === 'supabase' ? t('settings.modeSupabase') : t('settings.modeDemo')}
-              </p>
-            </CardBody>
-          </Card>
+          <Link to="/about" className="block">
+            <Card className="flex items-center gap-3 p-4 transition-colors hover:border-brand-300">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+                <Info className="h-4.5 w-4.5" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold">{t('about.title')}</span>
+                <span className="text-xs text-muted">{t('about.version', { version: APP_VERSION })} · {t('about.whatsNew')}</span>
+              </span>
+              <ChevronRight className="h-4 w-4 text-subtle" aria-hidden />
+            </Card>
+          </Link>
         </div>
       </div>
     </>

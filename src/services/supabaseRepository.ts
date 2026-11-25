@@ -118,8 +118,21 @@ export class SupabaseRepository implements Repository {
     return check(await this.sb.from('profiles').select('*').eq('id', userId).maybeSingle()) as Profile | null;
   }
 
-  async updateProfile(userId: UUID, patch: Partial<Pick<Profile, 'display_name' | 'avatar_color' | 'locale'>>) {
+  async updateProfile(userId: UUID, patch: Parameters<Repository['updateProfile']>[1]) {
     check(await this.sb.from('profiles').update(patch).eq('id', userId));
+  }
+
+  // ---------------------------------------------------------------- push
+  async savePushSubscription(sub: { endpoint: string; p256dh: string; auth: string; userAgent: string | null }) {
+    check(await this.sb.rpc('save_push_subscription', { p_endpoint: sub.endpoint, p_p256dh: sub.p256dh, p_auth: sub.auth, p_user_agent: sub.userAgent }));
+  }
+  async deletePushSubscription(endpoint: string) {
+    check(await this.sb.from('push_subscriptions').delete().eq('endpoint', endpoint));
+  }
+  async sendTestNotification() {
+    const { data, error } = await this.sb.functions.invoke<{ sent: number }>('notify', { body: { job: 'test' } });
+    if (error) throw error;
+    return data?.sent ?? 0;
   }
 
   // ---------------------------------------------------------------- apartments

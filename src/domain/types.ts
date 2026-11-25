@@ -17,6 +17,10 @@ export interface Profile {
   display_name: string;
   avatar_color: PaletteColor;
   locale: Locale;
+  /** Push preferences (absent in old demo data: treat as on). */
+  notify_daily?: boolean;
+  notify_due?: boolean;
+  notify_damage?: boolean;
   created_at: ISODateTime;
   updated_at: ISODateTime;
 }
