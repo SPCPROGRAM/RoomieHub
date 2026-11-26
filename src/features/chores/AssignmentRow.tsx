@@ -10,7 +10,7 @@ import type { Chore, ChoreAssignment } from '@/domain/types';
 import type { Household } from '@/hooks/useHousehold';
 import { cn } from '@/lib/cn';
 
-const STATUS_TONE: Record<DisplayStatus, Tone> = { pending: 'neutral', done: 'success', skipped: 'neutral', overdue: 'danger' };
+const STATUS_TONE: Record<DisplayStatus, Tone> = { pending: 'neutral', done: 'success', skipped: 'warning', overdue: 'danger' };
 
 export function AssignmentRow({ h, assignment, chore, onSwap, onEdit }: { h: Household; assignment: ChoreAssignment; chore: Chore | undefined; onSwap: (a: ChoreAssignment) => void; onEdit: (c: Chore) => void }) {
   const { t } = useTranslation();
@@ -26,7 +26,7 @@ export function AssignmentRow({ h, assignment, chore, onSwap, onEdit }: { h: Hou
     });
 
   return (
-    <li className={cn('group flex items-center gap-3 rounded-2xl border border-line bg-surface px-3 py-3 transition-colors sm:px-4', done && 'bg-sunken/50')}>
+    <li className={cn('group flex items-center gap-3 rounded-2xl border border-line bg-surface px-3 py-3 transition-colors sm:px-4', (done || assignment.status === 'skipped') && 'bg-sunken/50', assignment.status === 'skipped' && 'opacity-70')}>
       <button
         type="button"
         onClick={() => void toggle()}
@@ -51,9 +51,10 @@ export function AssignmentRow({ h, assignment, chore, onSwap, onEdit }: { h: Hou
       <span className="hidden sm:block">
         <Badge tone={STATUS_TONE[status]}>{t(`chores.status.${status}`)}</Badge>
       </span>
-      {status === 'overdue' && (
+      {/* on phones only the states that need attention are labelled */}
+      {(status === 'overdue' || status === 'skipped') && (
         <span className="sm:hidden">
-          <Badge tone="danger">{t('chores.status.overdue')}</Badge>
+          <Badge tone={STATUS_TONE[status]}>{t(`chores.status.${status}`)}</Badge>
         </span>
       )}
       {member && <Avatar name={member.profile.display_name} color={member.profile.avatar_color} size="sm" />}

@@ -11,11 +11,31 @@ export interface Release {
 
 export const CREDITS = {
   author: 'Skain_Dev',
+  realName: 'Sebastian Prieto',
   github: 'https://github.com/SPCPROGRAM',
   coDeveloper: 'Claude (Anthropic)',
 };
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '0.3.1',
+    date: '2026-11-26',
+    channel: 'beta',
+    changes: {
+      es: [
+        'Eliminar tareas ahora sí las quita: si nunca se completó (por ejemplo, creada por error) se borra del todo con sus turnos; si tiene historial, desaparece de la semana y lo hecho queda en Historial.',
+        'Los turnos de tareas eliminadas ya no aparecen en la semana, el inicio ni el calendario.',
+        'Los turnos omitidos se marcan claramente como «Omitida» también en el celular.',
+        'Créditos: Sebastian Prieto (Skain_Dev) en producto, diseño, desarrollo y programación.',
+      ],
+      en: [
+        'Deleting chores now really removes them: never completed (e.g. created by mistake) → fully deleted with its turns; with history → gone from the week, completed turns kept in History.',
+        'Turns of deleted chores no longer show in the week, home or calendar.',
+        'Skipped turns are clearly labelled “Skipped” on phones too.',
+        'Credits: Sebastian Prieto (Skain_Dev) on product, design, development and programming.',
+      ],
+    },
+  },
   {
     version: '0.3.0',
     date: '2026-11-26',

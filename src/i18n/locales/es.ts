@@ -64,9 +64,9 @@ const es = {
   about: {
     title: 'Información de la app',
     version: 'Versión {{version}}',
-    madeBy: 'Diseño y desarrollo',
+    madeBy: 'Producto, diseño, desarrollo y programación',
     coDeveloper: 'Desarrollado junto con',
-    coDeveloperNote: 'Ingeniería asistida por IA: Claude (Anthropic) programó, probó y desplegó la app bajo la dirección de producto de {{author}}.',
+    coDeveloperNote: 'Desarrollada en equipo: {{author}} dirigió el producto y metió mano en el desarrollo y la programación; Claude (Anthropic) programó, probó y desplegó la app a su lado.',
     github: 'Perfil de GitHub',
     credits: 'RoomieHub fue creada por {{author}} para organizar el hogar compartido.',
     betaNote: 'Estás usando una versión beta: puede haber errores. Si encuentras alguno, cuéntaselo a {{author}}.',

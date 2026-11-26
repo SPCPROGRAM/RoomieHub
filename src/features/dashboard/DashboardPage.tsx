@@ -17,6 +17,7 @@ import { useHousehold } from '@/hooks/useHousehold';
 import { cn } from '@/lib/cn';
 import { features } from '@/config/features';
 import { STATUS_TONE } from '@/features/maintenance/tones';
+import { isLiveTurn } from '@/features/chores/choreActions';
 
 function QuickAction({ to, icon, label }: { to: string; icon: ReactNode; label: string }) {
   return (
@@ -43,7 +44,7 @@ export default function DashboardPage() {
   const week = startOfWeek(today);
   const choreById = useMemo(() => new Map(h.snap.chores.map((c) => [c.id, c])), [h.snap.chores]);
 
-  const weekAssignments = h.snap.assignments.filter((a) => a.week_start === week && a.status !== 'skipped');
+  const weekAssignments = h.snap.assignments.filter((a) => a.week_start === week && a.status !== 'skipped' && isLiveTurn(a, choreById));
   const mine = weekAssignments.filter((a) => a.assignee_id === h.userId).sort((a, b) => a.due_date.localeCompare(b.due_date));
   const myDone = mine.filter((a) => a.status === 'done').length;
   const houseDone = weekAssignments.filter((a) => a.status === 'done').length;

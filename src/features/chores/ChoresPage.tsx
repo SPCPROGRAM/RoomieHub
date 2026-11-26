@@ -13,7 +13,7 @@ import { Alert, EmptyState, ProgressBar } from '@/components/ui/Feedback';
 import { Segmented } from '@/components/ui/Segmented';
 import { addDays, formatDate, formatDateTime, startOfWeek, todayISO } from '@/domain/dates';
 import { assigneeFor, cycleIndex, detectRepetitions, occurrenceWeekdays, workloadByMember } from '@/domain/rotation';
-import { archiveChore } from './choreActions';
+import { archiveChore, isLiveTurn } from './choreActions';
 import type { Chore, ChoreAssignment } from '@/domain/types';
 import { useHousehold } from '@/hooks/useHousehold';
 import { AssignmentRow } from './AssignmentRow';
@@ -49,11 +49,11 @@ export default function ChoresPage() {
   const weekRows = useMemo(
     () =>
       h.snap.assignments
-        .filter((a) => a.week_start === week && (scope === 'all' || a.assignee_id === h.userId))
+        .filter((a) => a.week_start === week && isLiveTurn(a, choreById) && (scope === 'all' || a.assignee_id === h.userId))
         .sort((a, b) => a.due_date.localeCompare(b.due_date) || (choreById.get(a.chore_id)?.title ?? '').localeCompare(choreById.get(b.chore_id)?.title ?? '')),
     [h.snap.assignments, week, scope, h.userId, choreById],
   );
-  const allWeekRows = h.snap.assignments.filter((a) => a.week_start === week);
+  const allWeekRows = h.snap.assignments.filter((a) => a.week_start === week && isLiveTurn(a, choreById));
   const workload = workloadByMember(allWeekRows, h.snap.chores, h.activeMembers.map((m) => m.user_id));
   const maxEffort = Math.max(1, ...[...workload.values()].map((w) => w.effort));
   const repetitions = detectRepetitions(h.snap.assignments, h.snap.rotation.repetition_threshold).filter((r) => {

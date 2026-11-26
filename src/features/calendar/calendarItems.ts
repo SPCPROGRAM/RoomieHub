@@ -23,7 +23,9 @@ export function itemsByDay(params: {
   }
   if (params.includeChores) {
     for (const a of params.assignments) {
-      if (a.due_date >= params.from && a.due_date <= params.to && a.status !== 'skipped') {
+      const chore = params.chores.get(a.chore_id);
+      // turns of deleted (archived) chores are not shown
+      if (a.due_date >= params.from && a.due_date <= params.to && a.status !== 'skipped' && chore && chore.archived_at === null) {
         push({ type: 'chore', key: a.id, date: a.due_date, assignment: a, chore: params.chores.get(a.chore_id) });
       }
     }

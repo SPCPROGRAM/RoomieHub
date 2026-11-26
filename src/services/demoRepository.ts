@@ -428,14 +428,25 @@ export class DemoRepository implements Repository {
     this.commit();
   }
 
-  async deletePendingAssignments(apartmentId: UUID, weekStart: string, opts: { choreId?: UUID; onwards?: boolean } = {}) {
+  async deletePendingAssignments(apartmentId: UUID, weekStart: string, opts: { choreId?: UUID; onwards?: boolean; includeSkipped?: boolean } = {}) {
     this.requireMember(apartmentId);
     const matches = (a: (typeof this.db.assignments)[number]) =>
       a.apartment_id === apartmentId &&
-      a.status === 'pending' &&
+      (a.status === 'pending' || (opts.includeSkipped === true && a.status === 'skipped')) &&
       (opts.onwards ? a.week_start >= weekStart : a.week_start === weekStart) &&
       (!opts.choreId || a.chore_id === opts.choreId);
     this.db.assignments = this.db.assignments.filter((a) => !matches(a));
+    this.commit();
+  }
+
+  async deleteChore(id: UUID) {
+    const c = this.find(this.db.chores, id);
+    this.requireMember(c.apartment_id);
+    const turnIds = new Set(this.db.assignments.filter((a) => a.chore_id === id).map((a) => a.id));
+    this.db.completions = this.db.completions.filter((x) => !turnIds.has(x.assignment_id));
+    this.db.assignments = this.db.assignments.filter((a) => a.chore_id !== id);
+    this.db.chores = this.db.chores.filter((x) => x.id !== id);
+    this.log(c.apartment_id, 'chore', id, 'deleted', c.title);
     this.commit();
   }
 

@@ -36,7 +36,8 @@ export default function AboutPage() {
                 </span>
                 <div>
                   <p className="text-xs text-muted">{t('about.madeBy')}</p>
-                  <p className="text-[15px] font-semibold">{CREDITS.author}</p>
+                  <p className="text-[15px] font-semibold">{CREDITS.realName}</p>
+                  <p className="text-xs text-muted">@{CREDITS.author}</p>
                 </div>
               </div>
               <a href={CREDITS.github} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5 text-sm hover:bg-sunken">
@@ -55,12 +56,12 @@ export default function AboutPage() {
                   <p className="text-[15px] font-semibold">{CREDITS.coDeveloper}</p>
                 </div>
               </div>
-              <p className="text-xs text-muted">{t('about.coDeveloperNote', { author: CREDITS.author })}</p>
+              <p className="text-xs text-muted">{t('about.coDeveloperNote', { author: `${CREDITS.realName} (${CREDITS.author})` })}</p>
               <p className="flex items-start gap-2 text-sm text-muted">
                 <Heart className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" aria-hidden />
-                {t('about.credits', { author: CREDITS.author })}
+                {t('about.credits', { author: `${CREDITS.realName} (${CREDITS.author})` })}
               </p>
-              <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">{t('about.betaNote', { author: CREDITS.author })}</p>
+              <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">{t('about.betaNote', { author: `${CREDITS.realName} (${CREDITS.author})` })}</p>
               <p className="text-xs text-subtle">
                 {t('settings.mode')}: {mode === 'supabase' ? t('settings.modeSupabase') : t('settings.modeDemo')}
               </p>

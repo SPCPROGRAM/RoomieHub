@@ -68,9 +68,9 @@ const en: Shape<typeof es> = {
   about: {
     title: 'About the app',
     version: 'Version {{version}}',
-    madeBy: 'Design and development',
+    madeBy: 'Product, design, development and programming',
     coDeveloper: 'Developed together with',
-    coDeveloperNote: 'AI-assisted engineering: Claude (Anthropic) coded, tested and deployed the app under the product direction of {{author}}.',
+    coDeveloperNote: 'Built as a team: {{author}} led the product and got hands-on with development and programming; Claude (Anthropic) coded, tested and deployed the app alongside.',
     github: 'GitHub profile',
     credits: 'RoomieHub was created by {{author}} to organize a shared home.',
     betaNote: 'You are using a beta version: there may be bugs. If you find one, tell {{author}}.',

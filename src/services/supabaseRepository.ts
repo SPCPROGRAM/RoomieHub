@@ -291,11 +291,15 @@ export class SupabaseRepository implements Repository {
     // ignoreDuplicates: two roomies generating the same week at once is harmless
     check(await this.sb.from('chore_assignments').upsert(rows, { onConflict: 'chore_id,week_start,occurrence', ignoreDuplicates: true }));
   }
-  async deletePendingAssignments(apartmentId: UUID, weekStart: string, opts: { choreId?: UUID; onwards?: boolean } = {}) {
-    let q = this.sb.from('chore_assignments').delete().eq('apartment_id', apartmentId).eq('status', 'pending');
+  async deletePendingAssignments(apartmentId: UUID, weekStart: string, opts: { choreId?: UUID; onwards?: boolean; includeSkipped?: boolean } = {}) {
+    let q = this.sb.from('chore_assignments').delete().eq('apartment_id', apartmentId).in('status', opts.includeSkipped ? ['pending', 'skipped'] : ['pending']);
     q = opts.onwards ? q.gte('week_start', weekStart) : q.eq('week_start', weekStart);
     if (opts.choreId) q = q.eq('chore_id', opts.choreId);
     check(await q);
+  }
+  async deleteChore(id: UUID) {
+    // turns and completions are removed by ON DELETE CASCADE
+    check(await this.sb.from('chores').delete().eq('id', id));
   }
   async completeAssignment(apartmentId: UUID, assignmentId: UUID, note: string | null) {
     check(await this.sb.from('chore_completions').insert({ apartment_id: apartmentId, assignment_id: assignmentId, note }));

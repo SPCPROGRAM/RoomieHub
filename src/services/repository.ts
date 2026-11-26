@@ -138,7 +138,9 @@ export interface Repository {
   updateRotation(apartmentId: UUID, patch: Partial<Pick<RotationSettings, 'member_order' | 'anchor_week' | 'auto_generate' | 'repetition_threshold' | 'last_generated_week'>>): Promise<void>;
   insertAssignments(rows: NewAssignment[]): Promise<void>;
   /** Remove PENDING assignments from `weekStart` on (only that week unless `onwards`), optionally of one chore. Done ones stay. */
-  deletePendingAssignments(apartmentId: UUID, weekStart: ISODate, opts?: { choreId?: UUID; onwards?: boolean }): Promise<void>;
+  deletePendingAssignments(apartmentId: UUID, weekStart: ISODate, opts?: { choreId?: UUID; onwards?: boolean; includeSkipped?: boolean }): Promise<void>;
+  /** Permanently delete a chore and all of its turns (only used when it has no completed history). */
+  deleteChore(id: UUID): Promise<void>;
   completeAssignment(apartmentId: UUID, assignmentId: UUID, note: string | null): Promise<void>;
   uncompleteAssignment(assignmentId: UUID): Promise<void>;
   setAssignmentSkipped(assignmentId: UUID, skipped: boolean): Promise<void>;
