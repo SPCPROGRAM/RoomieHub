@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,8 @@ import { todayISO } from '@/domain/dates';
 import { reportSchema, type ReportValues } from '@/domain/schemas';
 import type { MaintenanceReport } from '@/domain/types';
 import type { Household } from '@/hooks/useHousehold';
+import { addReportPhotos, MAX_PHOTOS } from './photos';
+import { PendingPhotos, PhotoButtons } from './PhotoPicker';
 
 export const PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;
 export const STATUSES = ['open', 'in_progress', 'resolved', 'closed'] as const;
@@ -16,9 +18,12 @@ export const STATUSES = ['open', 'in_progress', 'resolved', 'closed'] as const;
 export function ReportFormSheet({ h, open, onClose, report, onCreated }: { h: Household; open: boolean; onClose: () => void; report: MaintenanceReport | null; onCreated?: (r: MaintenanceReport) => void }) {
   const { t } = useTranslation();
   const { register, handleSubmit, reset, formState } = useForm<ReportValues>({ resolver: zodResolver(reportSchema) });
+  const [photos, setPhotos] = useState<File[]>([]);
+  const room = MAX_PHOTOS - (report?.photo_paths.length ?? 0);
 
   useEffect(() => {
     if (!open) return;
+    setPhotos([]);
     reset({
       title: report?.title ?? '',
       description: report?.description ?? '',
@@ -40,8 +45,21 @@ export function ReportFormSheet({ h, open, onClose, report, onCreated }: { h: Ho
       occurred_on: v.occurredOn,
       responsible_id: v.responsibleId || null,
     };
-    const r = await h.run((repo) => (report ? repo.updateReport(report.id, input).then(() => null) : repo.createReport(h.snap.apartment.id, input)), { success: t('maintenance.saved') });
+    const r = await h.run(
+      async (repo) => {
+        if (report) {
+          await repo.updateReport(report.id, input);
+          if (photos.length) await addReportPhotos(repo, h, report, photos);
+          return null;
+        }
+        const created = await repo.createReport(h.snap.apartment.id, input);
+        if (photos.length) await addReportPhotos(repo, h, created, photos);
+        return created;
+      },
+      { success: t('maintenance.saved') },
+    );
     if (r.ok) {
+      setPhotos([]);
       onClose();
       if (r.value) onCreated?.(r.value);
     }
@@ -111,6 +129,14 @@ export function ReportFormSheet({ h, open, onClose, report, onCreated }: { h: Ho
               </Select>
             )}
           </Field>
+        </div>
+        <div className="space-y-3">
+          <p className="text-sm font-medium">
+            {t('maintenance.photos')} <span className="text-xs font-normal text-subtle">({t('common.optional')})</span>
+          </p>
+          {room > 0 && <PhotoButtons onPick={(files) => setPhotos((list) => [...list, ...files].slice(0, room))} disabled={!h.canWrite || formState.isSubmitting} />}
+          <PendingPhotos files={photos} onRemove={(i) => setPhotos((list) => list.filter((_, j) => j !== i))} />
+          <p className="text-xs text-subtle">{t('maintenance.photosHint')}</p>
         </div>
       </form>
     </Sheet>

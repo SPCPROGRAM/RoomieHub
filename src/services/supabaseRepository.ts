@@ -386,7 +386,8 @@ export class SupabaseRepository implements Repository {
     check(await this.sb.from('maintenance_reports').delete().eq('id', id));
   }
   async uploadPhoto(apartmentId: UUID, reportId: UUID, file: Blob) {
-    const path = `${apartmentId}/${reportId}/${crypto.randomUUID()}.jpg`;
+    const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+    const path = `${apartmentId}/${reportId}/${crypto.randomUUID()}.${ext}`;
     const { error } = await this.sb.storage.from(PHOTO_BUCKET).upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false });
     if (error) throw error;
     return path;

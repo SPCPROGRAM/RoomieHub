@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Check, MoreVertical, Undo2 } from 'lucide-react';
+import { ArrowLeftRight, Check, MoreVertical, Pencil, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CategoryTag } from '@/components/shared/CategoryTag';
@@ -12,7 +12,7 @@ import { cn } from '@/lib/cn';
 
 const STATUS_TONE: Record<DisplayStatus, Tone> = { pending: 'neutral', done: 'success', skipped: 'neutral', overdue: 'danger' };
 
-export function AssignmentRow({ h, assignment, chore, onSwap }: { h: Household; assignment: ChoreAssignment; chore: Chore | undefined; onSwap: (a: ChoreAssignment) => void }) {
+export function AssignmentRow({ h, assignment, chore, onSwap, onEdit }: { h: Household; assignment: ChoreAssignment; chore: Chore | undefined; onSwap: (a: ChoreAssignment) => void; onEdit: (c: Chore) => void }) {
   const { t } = useTranslation();
   const [menu, setMenu] = useState(false);
   const status = displayStatus(assignment, todayISO());
@@ -72,6 +72,20 @@ export function AssignmentRow({ h, assignment, chore, onSwap }: { h: Household; 
           <>
             <div className="fixed inset-0 z-10" onClick={() => setMenu(false)} aria-hidden />
             <div className="absolute right-0 top-9 z-20 w-56 animate-pop rounded-xl border border-line bg-elevated p-1 shadow-float" role="menu">
+              {chore && chore.archived_at === null && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-sunken"
+                  onClick={() => {
+                    setMenu(false);
+                    onEdit(chore);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" aria-hidden />
+                  {t('chores.editOrDelete')}
+                </button>
+              )}
               {assignment.status === 'pending' && (
                 <button
                   type="button"

@@ -71,10 +71,15 @@ export const choreSchema = z.object({
   title: required(100),
   description: optionalText(500),
   categoryId: z.string(),
-  frequency: z.enum(['daily', 'twice_weekly', 'weekly', 'biweekly', 'monthly']),
+  frequency: z.enum(['daily', 'twice_weekly', 'weekly', 'biweekly', 'monthly', 'custom_days']),
+  scheduleDays: z.array(z.string()),
+  rotationMode: z.enum(['weekly', 'per_occurrence', 'fixed']),
+  fixedAssigneeId: z.string(),
   dueWeekday: z.string().regex(/^[1-7]$/, 'validation.required'),
   effort: z.string().regex(/^[1-5]$/, 'validation.required'),
-});
+})
+  .refine((v) => v.frequency !== 'custom_days' || v.scheduleDays.length > 0, { path: ['scheduleDays'], message: 'validation.pickDays' })
+  .refine((v) => v.rotationMode !== 'fixed' || v.fixedAssigneeId !== '', { path: ['fixedAssigneeId'], message: 'validation.pickPerson' });
 
 export const expenseSchema = z
   .object({

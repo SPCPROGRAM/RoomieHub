@@ -20,15 +20,20 @@ export const FREQUENCY_INTERVAL_WEEKS: Record<ChoreFrequency, number> = {
   weekly: 1,
   biweekly: 2,
   monthly: 4,
+  custom_days: 1,
 };
 
 /** ISO weekdays (1 = Monday) on which the occurrences of a chore fall within its week. */
-export function occurrenceWeekdays(chore: Pick<Chore, 'frequency' | 'due_weekday'>): number[] {
+export function occurrenceWeekdays(chore: Pick<Chore, 'frequency' | 'due_weekday'> & { schedule_days?: number[] | null }): number[] {
   switch (chore.frequency) {
     case 'daily':
       return [1, 2, 3, 4, 5, 6, 7];
     case 'twice_weekly':
       return [3, 7];
+    case 'custom_days': {
+      const days = [...new Set((chore.schedule_days ?? []).filter((d) => d >= 1 && d <= 7))].sort((a, b) => a - b);
+      return days.length ? days : [chore.due_weekday];
+    }
     default:
       return [chore.due_weekday];
   }
@@ -52,6 +57,29 @@ export function cycleIndex(chore: Pick<Chore, 'created_at' | 'frequency'>, weekS
 export function assigneeFor(memberOrder: readonly UUID[], rotationOffset: number, cycle: number): UUID | null {
   if (memberOrder.length === 0) return null;
   return memberOrder[(rotationOffset + cycle) % memberOrder.length] ?? null;
+}
+
+/**
+ * Who does occurrence `occurrence` (0-based within the week) of a chore in cycle `cycle`.
+ *  - weekly:         the whole cycle goes to one person (index = cycle)
+ *  - per_occurrence: every occurrence moves to the next person and the sequence continues across
+ *                    weeks (index = cycle × occurrences per week + occurrence)
+ *  - fixed:          always the chosen person (falls back to rotation if they left the apartment)
+ * Returns the assignee and the rotation index stored with the assignment.
+ */
+export function assigneeForOccurrence(
+  chore: Pick<Chore, 'rotation_offset'> & { rotation_mode?: Chore['rotation_mode'] | null; fixed_assignee_id?: UUID | null },
+  memberOrder: readonly UUID[],
+  cycle: number,
+  occurrence: number,
+  occurrencesPerWeek: number,
+): { assignee: UUID | null; index: number } {
+  const mode = chore.rotation_mode ?? 'weekly';
+  if (mode === 'fixed' && chore.fixed_assignee_id && memberOrder.includes(chore.fixed_assignee_id)) {
+    return { assignee: chore.fixed_assignee_id, index: cycle };
+  }
+  const index = mode === 'per_occurrence' ? cycle * occurrencesPerWeek + occurrence : cycle;
+  return { assignee: assigneeFor(memberOrder, chore.rotation_offset, index), index };
 }
 
 export function isChoreSchedulable(chore: Pick<Chore, 'active' | 'archived_at'>): boolean {
@@ -78,17 +106,18 @@ export function generateWeekAssignments(params: {
     if (!isChoreSchedulable(chore)) continue;
     const cycle = cycleIndex(chore, monday, rotation.anchor_week);
     if (cycle === null) continue;
-    const assignee = assigneeFor(rotation.member_order, chore.rotation_offset, cycle);
-    if (!assignee) continue;
+    const days = occurrenceWeekdays(chore);
 
-    occurrenceWeekdays(chore).forEach((weekday, occurrence) => {
+    days.forEach((weekday, occurrence) => {
       if (taken.has(`${chore.id}#${occurrence}`)) return;
+      const { assignee, index } = assigneeForOccurrence(chore, rotation.member_order, cycle, occurrence, days.length);
+      if (!assignee) return;
       result.push({
         apartment_id: apartmentId,
         chore_id: chore.id,
         week_start: monday,
         occurrence,
-        rotation_index: cycle,
+        rotation_index: index,
         assignee_id: assignee,
         original_assignee_id: assignee,
         due_date: addDays(monday, weekday - 1),

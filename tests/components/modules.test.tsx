@@ -69,7 +69,8 @@ describe('chores', () => {
     await user.type(within(dialog).getByLabelText('Nombre de la tarea'), 'Regar las plantas');
     await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(await screen.findByText('Regar las plantas')).toBeInTheDocument();
+    // new chores default to daily + rotating every time: several turns this week
+    expect((await screen.findAllByText('Regar las plantas')).length).toBeGreaterThan(1);
   });
 });
 

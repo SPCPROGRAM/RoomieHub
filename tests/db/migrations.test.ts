@@ -334,3 +334,17 @@ describe('server role (Edge Functions)', () => {
     expect(p).toEqual({ subs: true, deliveries: true, assignments: true, profiles: true });
   });
 });
+
+describe('flexible chore scheduling', () => {
+  it('accepts specific days, per-occurrence rotation and a fixed person who is a member', async () => {
+    await t.as(A, `insert into chores (apartment_id, title, frequency, schedule_days, rotation_mode) values ($1, 'Cocinar', 'custom_days', '{1,3,5}', 'per_occurrence')`, [apt]);
+    await t.as(A, `insert into chores (apartment_id, title, rotation_mode, fixed_assignee_id) values ($1, 'Plantas', 'fixed', $2)`, [apt, B]);
+  });
+
+  it('rejects invalid schedules and people who are not members', async () => {
+    await expectError(t.as(A, `insert into chores (apartment_id, title, frequency, schedule_days) values ($1, 'X', 'custom_days', '{}')`, [apt]), /chores_schedule_days_check/);
+    await expectError(t.as(A, `insert into chores (apartment_id, title, frequency, schedule_days) values ($1, 'X', 'custom_days', '{8}')`, [apt]), /chores_schedule_days_check/);
+    await expectError(t.as(A, `insert into chores (apartment_id, title, rotation_mode) values ($1, 'X', 'fixed')`, [apt]), /chores_fixed_assignee_check/);
+    await expectError(t.as(A, `insert into chores (apartment_id, title, rotation_mode, fixed_assignee_id) values ($1, 'X', 'fixed', $2)`, [apt, D]), /foreign key/);
+  });
+});

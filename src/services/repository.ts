@@ -36,6 +36,9 @@ export interface ChoreInput {
   due_weekday: number;
   effort: number;
   rotation_offset?: number;
+  schedule_days?: number[];
+  rotation_mode?: Chore['rotation_mode'];
+  fixed_assignee_id?: UUID | null;
   active?: boolean;
 }
 

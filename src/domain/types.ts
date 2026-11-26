@@ -78,7 +78,9 @@ export interface Category {
   created_at: ISODateTime;
 }
 
-export type ChoreFrequency = 'daily' | 'twice_weekly' | 'weekly' | 'biweekly' | 'monthly';
+export type ChoreFrequency = 'daily' | 'twice_weekly' | 'weekly' | 'biweekly' | 'monthly' | 'custom_days';
+/** weekly: same person all cycle · per_occurrence: next person every time · fixed: always one person */
+export type RotationMode = 'weekly' | 'per_occurrence' | 'fixed';
 
 export interface Chore {
   id: UUID;
@@ -90,6 +92,10 @@ export interface Chore {
   /** ISO weekday 1 (Monday) … 7 (Sunday). */
   due_weekday: number;
   rotation_offset: number;
+  /** ISO weekdays (1 = Monday) when frequency is 'custom_days'. */
+  schedule_days: number[];
+  rotation_mode: RotationMode;
+  fixed_assignee_id: UUID | null;
   effort: number;
   active: boolean;
   archived_at: ISODateTime | null;

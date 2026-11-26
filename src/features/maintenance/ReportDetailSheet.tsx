@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Camera, ImageOff, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ImageOff, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { ActivityFeed } from '@/components/shared/ActivityFeed';
@@ -13,13 +13,13 @@ import { formatDate } from '@/domain/dates';
 import type { MaintenanceReport } from '@/domain/types';
 import type { Household } from '@/hooks/useHousehold';
 import { features } from '@/config/features';
-import { compressImage } from '@/lib/image';
 import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/providers/ToastProvider';
+import { addReportPhotos, MAX_PHOTOS } from './photos';
+import { PhotoButtons } from './PhotoPicker';
 import { PRIORITY_TONE, STATUS_TONE } from './tones';
 import { STATUSES } from './ReportFormSheet';
 
-const MAX_PHOTOS = 6;
 
 function Photo({ path, onRemove, canRemove }: { path: string; onRemove: () => void; canRemove: boolean }) {
   const { t } = useTranslation();
@@ -65,7 +65,6 @@ export function ReportDetailSheet({ h, report, onClose, onEdit }: { h: Household
   const confirm = useConfirm();
   const toast = useToast();
   const navigate = useNavigate();
-  const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   if (!report) return null;
 
@@ -73,25 +72,13 @@ export function ReportDetailSheet({ h, report, onClose, onEdit }: { h: Household
   const totalCost = costs.reduce((s, e) => s + e.amount, 0);
   const history = h.snap.activity.filter((a) => a.entity_type === 'maintenance_report' && a.entity_id === report.id);
 
-  const upload = async (files: FileList | null) => {
-    if (!files?.length) return;
-    const room = MAX_PHOTOS - report.photo_paths.length;
-    const selected = [...files].slice(0, room);
+  const upload = async (files: File[]) => {
+    if (!files.length) return;
+    const selected = [...files];
     setUploading(true);
-    await h.run(async (repo) => {
-      const paths: string[] = [];
-      for (const f of selected) {
-        if (f.size > 25 * 1024 * 1024) {
-          toast.error(t('errors.photo_too_large'));
-          continue;
-        }
-        const blob = await compressImage(f);
-        paths.push(await repo.uploadPhoto(h.snap.apartment.id, report.id, blob));
-      }
-      if (paths.length) await repo.updateReport(report.id, { photo_paths: [...report.photo_paths, ...paths] });
-    });
+    const r = await h.run((repo) => addReportPhotos(repo, h, report, selected));
+    if (r.ok && r.value > 0) toast.success(t('maintenance.photosAdded', { count: r.value }));
     setUploading(false);
-    if (fileRef.current) fileRef.current.value = '';
   };
 
   const removePhoto = (path: string) =>
@@ -155,17 +142,14 @@ export function ReportDetailSheet({ h, report, onClose, onEdit }: { h: Household
         {report.description && <p className="whitespace-pre-line text-sm text-ink">{report.description}</p>}
 
         <section>
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">{t('maintenance.photos')}</h3>
-            {report.photo_paths.length < MAX_PHOTOS && (
-              <>
-                <input ref={fileRef} type="file" accept="image/*" capture="environment" multiple hidden onChange={(e) => void upload(e.target.files)} />
-                <Button size="sm" variant="soft" icon={<Camera className="h-4 w-4" />} loading={uploading} disabled={!h.canWrite} onClick={() => fileRef.current?.click()}>
-                  {t('maintenance.addPhotos')}
-                </Button>
-              </>
-            )}
-          </div>
+          <h3 className="mb-2 text-sm font-semibold">
+            {t('maintenance.photos')} <span className="font-normal text-muted">({report.photo_paths.length}/{MAX_PHOTOS})</span>
+          </h3>
+          {report.photo_paths.length < MAX_PHOTOS && (
+            <div className="mb-3">
+              <PhotoButtons onPick={(files) => void upload(files)} loading={uploading} disabled={!h.canWrite} />
+            </div>
+          )}
           {report.photo_paths.length > 0 ? (
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {report.photo_paths.map((p) => (

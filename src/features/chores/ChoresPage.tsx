@@ -12,7 +12,8 @@ import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Alert, EmptyState, ProgressBar } from '@/components/ui/Feedback';
 import { Segmented } from '@/components/ui/Segmented';
 import { addDays, formatDate, formatDateTime, startOfWeek, todayISO } from '@/domain/dates';
-import { assigneeFor, cycleIndex, detectRepetitions, workloadByMember } from '@/domain/rotation';
+import { assigneeFor, cycleIndex, detectRepetitions, occurrenceWeekdays, workloadByMember } from '@/domain/rotation';
+import { archiveChore } from './choreActions';
 import type { Chore, ChoreAssignment } from '@/domain/types';
 import { useHousehold } from '@/hooks/useHousehold';
 import { AssignmentRow } from './AssignmentRow';
@@ -55,7 +56,11 @@ export default function ChoresPage() {
   const allWeekRows = h.snap.assignments.filter((a) => a.week_start === week);
   const workload = workloadByMember(allWeekRows, h.snap.chores, h.activeMembers.map((m) => m.user_id));
   const maxEffort = Math.max(1, ...[...workload.values()].map((w) => w.effort));
-  const repetitions = detectRepetitions(h.snap.assignments, h.snap.rotation.repetition_threshold).filter((r) => choreById.get(r.choreId)?.archived_at === null);
+  const repetitions = detectRepetitions(h.snap.assignments, h.snap.rotation.repetition_threshold).filter((r) => {
+    const c = choreById.get(r.choreId);
+    // a fixed-person chore repeats on purpose
+    return c?.archived_at === null && c.rotation_mode !== 'fixed';
+  });
   const currentWeek = startOfWeek(todayISO());
   const doneCount = allWeekRows.filter((a) => a.status === 'done').length;
 
@@ -66,17 +71,13 @@ export default function ChoresPage() {
 
   const archive = async (chore: Chore) => {
     if (!(await confirm({ title: t('chores.archive'), message: t('chores.archiveConfirm'), danger: true, confirmLabel: t('common.delete') }))) return;
-    await h.run(
-      async (repo) => {
-        await repo.updateChore(chore.id, { archived_at: new Date().toISOString(), active: false });
-        // pending turns from this week on disappear; past and completed turns stay as history
-        await repo.deletePendingAssignments(h.snap.apartment.id, currentWeek, { choreId: chore.id, onwards: true });
-      },
-      { success: t('chores.archived') },
-    );
+    // pending turns from this week on disappear; past and completed turns stay as history
+    await h.run((repo) => archiveChore(repo, h, chore), { success: t('chores.archived') });
   };
 
   const nextAssignee = (chore: Chore) => {
+    if (chore.rotation_mode === 'fixed') return chore.fixed_assignee_id;
+    if (chore.rotation_mode === 'per_occurrence') return null; // changes every time: the badge explains it
     const order = h.orderedMembers.map((m) => m.user_id);
     for (let w = 1; w <= 8; w++) {
       const wk = addDays(currentWeek, w * 7);
@@ -185,7 +186,7 @@ export default function ChoresPage() {
             ) : (
               <ul className="space-y-2">
                 {weekRows.map((a) => (
-                  <AssignmentRow key={a.id} h={h} assignment={a} chore={choreById.get(a.chore_id)} onSwap={setSwapSource} />
+                  <AssignmentRow key={a.id} h={h} assignment={a} chore={choreById.get(a.chore_id)} onSwap={setSwapSource} onEdit={(c) => openForm(c)} />
                 ))}
               </ul>
             )}
@@ -234,7 +235,9 @@ export default function ChoresPage() {
                     </div>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <Badge tone="brand">{t(`chores.freq.${c.frequency}`)}</Badge>
-                      {c.frequency !== 'daily' && c.frequency !== 'twice_weekly' && <Badge>{t(`chores.weekdays.${c.due_weekday}`)}</Badge>}
+                      {c.frequency === 'custom_days' && <Badge>{occurrenceWeekdays(c).map((d) => t(`chores.weekdayShort.${d}`)).join(' · ')}</Badge>}
+                      {(c.frequency === 'weekly' || c.frequency === 'biweekly' || c.frequency === 'monthly') && <Badge>{t(`chores.weekdays.${c.due_weekday}`)}</Badge>}
+                      <Badge tone="violet">{c.rotation_mode === 'fixed' ? h.fullNameOf(c.fixed_assignee_id) : t(`chores.modes.${c.rotation_mode ?? 'weekly'}.title`)}</Badge>
                       <Badge>{t('chores.points', { count: c.effort })}</Badge>
                       <CategoryTag category={c.category_id ? h.categoryById.get(c.category_id) : null} />
                     </div>

@@ -11,9 +11,34 @@ export interface Release {
 
 export const CREDITS = {
   author: 'Skain_Dev',
+  github: 'https://github.com/SPCPROGRAM',
+  coDeveloper: 'Claude (Anthropic)',
 };
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '0.3.0',
+    date: '2026-11-26',
+    channel: 'beta',
+    changes: {
+      es: [
+        'Nueva frecuencia «Días específicos»: elige los días de la tarea, con atajo «Día por medio (L · X · V)».',
+        'Nueva forma de repartir: «Rota cada vez» (hoy uno, mañana otro; ideal para cocinar), «Rota cada semana» o «Persona fija».',
+        'Vista previa en el formulario de quién hace qué esta semana.',
+        'Editar y eliminar tareas desde el menú de cada turno; al cambiar una tarea, los turnos pendientes se recalculan desde esta semana.',
+        'Fotos en los reportes de daños: botones «Tomar foto» y «Elegir de la galería», también al crear el reporte.',
+        'Créditos: perfil de GitHub de Skain_Dev y mención a Claude (Anthropic) como parte del desarrollo.',
+      ],
+      en: [
+        'New “Specific days” frequency: choose the chore days, with an “Every other day (M · W · F)” shortcut.',
+        'New ways to share chores: “Rotates every time” (today one, tomorrow another; great for cooking), “Rotates every week” or “Fixed person”.',
+        'Live preview in the form of who does what this week.',
+        'Edit and delete chores from each turn’s menu; changing a chore recalculates pending turns from this week on.',
+        'Photos in damage reports: “Take photo” and “Choose from gallery” buttons, also when creating the report.',
+        'Credits: Skain_Dev’s GitHub profile and Claude (Anthropic) as part of the development.',
+      ],
+    },
+  },
   {
     version: '0.2.1',
     date: '2026-11-25',

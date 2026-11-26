@@ -1,4 +1,4 @@
-import { Code2, Heart, Sparkles } from 'lucide-react';
+import { Bot, Code2, ExternalLink, Heart, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { LogoMark } from '@/components/brand/Logo';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -39,6 +39,23 @@ export default function AboutPage() {
                   <p className="text-[15px] font-semibold">{CREDITS.author}</p>
                 </div>
               </div>
+              <a href={CREDITS.github} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5 text-sm hover:bg-sunken">
+                <ExternalLink className="h-4 w-4 shrink-0 text-brand-600 dark:text-brand-300" aria-hidden />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs text-muted">{t('about.github')}</span>
+                  <span className="block truncate font-medium">{CREDITS.github.replace('https://', '')}</span>
+                </span>
+              </a>
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+                  <Bot className="h-5 w-5" aria-hidden />
+                </span>
+                <div>
+                  <p className="text-xs text-muted">{t('about.coDeveloper')}</p>
+                  <p className="text-[15px] font-semibold">{CREDITS.coDeveloper}</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted">{t('about.coDeveloperNote', { author: CREDITS.author })}</p>
               <p className="flex items-start gap-2 text-sm text-muted">
                 <Heart className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" aria-hidden />
                 {t('about.credits', { author: CREDITS.author })}

@@ -13,7 +13,8 @@ describe('routing and guards', () => {
 
   it('shows the dashboard for a signed-in roomie', async () => {
     await renderApp('/');
-    expect(await screen.findByRole('heading', { name: /Hola, Valentina/ })).toBeInTheDocument();
+    // first render loads the lazy dashboard chunk: allow more time when the machine is busy
+    expect(await screen.findByRole('heading', { name: /Hola, Valentina/ }, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText('Mis tareas de la semana')).toBeInTheDocument();
     expect(screen.getAllByText(/Modo demostración/).length).toBeGreaterThan(0);
   });

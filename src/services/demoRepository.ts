@@ -33,7 +33,11 @@ export class DemoRepository implements Repository {
       const raw = this.storage.getItem(DB_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as DemoDB;
-        if (parsed.version === 1) return parsed;
+        if (parsed.version === 1) {
+          // demo data saved before flexible scheduling existed
+          parsed.chores = parsed.chores.map((c) => ({ ...c, schedule_days: c.schedule_days ?? [], rotation_mode: c.rotation_mode ?? 'weekly', fixed_assignee_id: c.fixed_assignee_id ?? null }));
+          return parsed;
+        }
       }
     } catch {
       // corrupted demo data: start over
@@ -381,6 +385,9 @@ export class DemoRepository implements Repository {
       id: newId(),
       apartment_id: apartmentId,
       rotation_offset: 0,
+      schedule_days: [] as number[],
+      rotation_mode: 'weekly' as const,
+      fixed_assignee_id: null as UUID | null,
       active: true,
       ...input,
       archived_at: null,
