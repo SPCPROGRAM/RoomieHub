@@ -41,7 +41,8 @@ type ProfileRow = { id: string; locale: Locale; display_name: string; notify_dai
 
 /** Send one message to every device of a user; drop subscriptions the push service says are gone. */
 async function sendToUser(userId: string, message: Message): Promise<number> {
-  const { data: subs } = await admin.from('push_subscriptions').select('id, endpoint, p256dh, auth').eq('user_id', userId);
+  const { data: subs, error: subsError } = await admin.from('push_subscriptions').select('id, endpoint, p256dh, auth').eq('user_id', userId);
+  if (subsError) throw subsError; // never report "0 sent" when the real problem is the database
   let sent = 0;
   for (const s of subs ?? []) {
     try {
@@ -62,13 +63,15 @@ async function deliver(messages: Map<string, Message>, keyFor: (userId: string) 
   let users = 0;
   for (const [userId, message] of messages) {
     // no device yet: don't mark it as delivered, so a phone enabled later today still gets it
-    const { count } = await admin.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+    const { count, error: countError } = await admin.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+    if (countError) throw countError;
     if (!count) continue;
     const { data, error } = await admin
       .from('notification_deliveries')
       .upsert({ user_id: userId, dedupe_key: keyFor(userId) }, { onConflict: 'user_id,dedupe_key', ignoreDuplicates: true })
       .select('user_id');
-    if (error || !data?.length) continue; // already sent
+    if (error) throw error;
+    if (!data?.length) continue; // already sent
     if ((await sendToUser(userId, message)) > 0) users++;
   }
   return users;
@@ -91,7 +94,8 @@ async function pendingItems(from: string, to: string): Promise<PendingItem[]> {
 
 async function recipients(userIds: string[], flag: 'notify_daily' | 'notify_due' | 'notify_damage'): Promise<Recipient[]> {
   if (userIds.length === 0) return [];
-  const { data } = await admin.from('profiles').select('id, locale, notify_daily, notify_due, notify_damage').in('id', userIds);
+  const { data, error } = await admin.from('profiles').select('id, locale, notify_daily, notify_due, notify_damage').in('id', userIds);
+  if (error) throw error;
   return ((data ?? []) as ProfileRow[]).filter((p) => p[flag] !== false).map((p) => ({ user_id: p.id, locale: p.locale === 'en' ? 'en' : 'es' }));
 }
 

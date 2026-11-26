@@ -324,3 +324,13 @@ describe('push notifications', () => {
     expect(r!.id).toBeTruthy();
   });
 });
+describe('server role (Edge Functions)', () => {
+  it('can read and write what the notifier needs (new projects grant nothing by default)', async () => {
+    const [p] = await t.admin<Record<string, boolean>>(`
+      select has_table_privilege('service_role', 'public.push_subscriptions', 'select,delete,update') as subs,
+             has_table_privilege('service_role', 'public.notification_deliveries', 'select,insert') as deliveries,
+             has_table_privilege('service_role', 'public.chore_assignments', 'select') as assignments,
+             has_table_privilege('service_role', 'public.profiles', 'select') as profiles`);
+    expect(p).toEqual({ subs: true, deliveries: true, assignments: true, profiles: true });
+  });
+});

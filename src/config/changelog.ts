@@ -15,6 +15,15 @@ export const CREDITS = {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.2.1',
+    date: '2026-11-25',
+    channel: 'beta',
+    changes: {
+      es: ['Corrección: las notificaciones (incluida la de prueba) no llegaban por un permiso faltante en el servidor.'],
+      en: ['Fix: notifications (including the test one) were not delivered because of a missing server permission.'],
+    },
+  },
+  {
     version: '0.2.0',
     date: '2026-11-25',
     channel: 'beta',
