@@ -30,6 +30,7 @@ export function loadSnapshot(userId: UUID, apartmentId: UUID): Snapshot | null {
 export function clearSnapshots() {
   for (let i = localStorage.length - 1; i >= 0; i--) {
     const key = localStorage.key(i);
-    if (key?.startsWith(PREFIX)) localStorage.removeItem(key);
+    // offline copies and unsent form drafts both belong to the signed-in person
+    if (key?.startsWith(PREFIX) || key?.startsWith('rh.draft.')) localStorage.removeItem(key);
   }
 }

@@ -18,6 +18,23 @@ export const CREDITS = {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.3.2',
+    date: '2026-11-26',
+    channel: 'beta',
+    changes: {
+      es: [
+        'Corrección: al bloquear el teléfono o volver a la app ya no se recarga todo ni se pierde lo que estabas escribiendo.',
+        'Cámara dentro de la app: «Tomar foto» ya no te saca de RoomieHub (si no está disponible, usa la cámara del teléfono).',
+        'Los reportes de daños se guardan como borrador mientras escribes; si Android cierra la app, al volver a Daños lo recuperas.',
+      ],
+      en: [
+        'Fix: locking the phone or returning to the app no longer reloads everything or loses what you were typing.',
+        'In-app camera: “Take photo” no longer leaves RoomieHub (falls back to the phone camera if unavailable).',
+        'Damage reports are saved as a draft while you type; if Android closes the app, you get it back in Repairs.',
+      ],
+    },
+  },
+  {
     version: '0.3.1',
     date: '2026-11-26',
     channel: 'beta',

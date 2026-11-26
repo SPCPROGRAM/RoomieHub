@@ -9,21 +9,32 @@ import { todayISO } from '@/domain/dates';
 import { reportSchema, type ReportValues } from '@/domain/schemas';
 import type { MaintenanceReport } from '@/domain/types';
 import type { Household } from '@/hooks/useHousehold';
+import { clearDraft, readDraft, useFormDraft } from '@/hooks/useFormDraft';
 import { addReportPhotos, MAX_PHOTOS } from './photos';
 import { PendingPhotos, PhotoButtons } from './PhotoPicker';
+
+export const reportDraftKey = (apartmentId: string) => `report.${apartmentId}`;
 
 export const PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;
 export const STATUSES = ['open', 'in_progress', 'resolved', 'closed'] as const;
 
 export function ReportFormSheet({ h, open, onClose, report, onCreated }: { h: Household; open: boolean; onClose: () => void; report: MaintenanceReport | null; onCreated?: (r: MaintenanceReport) => void }) {
   const { t } = useTranslation();
-  const { register, handleSubmit, reset, formState } = useForm<ReportValues>({ resolver: zodResolver(reportSchema) });
+  const form = useForm<ReportValues>({ resolver: zodResolver(reportSchema) });
+  const { register, handleSubmit, reset, formState } = form;
+  // new reports are auto-saved as a draft (survives Android killing the app in the background)
+  const draftKey = reportDraftKey(h.snap.apartment.id);
+  const [restored, setRestored] = useState(false);
+  useFormDraft(draftKey, form, open && report === null);
   const [photos, setPhotos] = useState<File[]>([]);
   const room = MAX_PHOTOS - (report?.photo_paths.length ?? 0);
 
   useEffect(() => {
     if (!open) return;
     setPhotos([]);
+    const draft = report ? null : readDraft<ReportValues>(draftKey);
+    setRestored(Boolean(draft?.title || draft?.description));
+    if (draft) return reset(draft);
     reset({
       title: report?.title ?? '',
       description: report?.description ?? '',
@@ -33,7 +44,12 @@ export function ReportFormSheet({ h, open, onClose, report, onCreated }: { h: Ho
       occurredOn: report?.occurred_on ?? todayISO(),
       responsibleId: report?.responsible_id ?? '',
     });
-  }, [open, report, reset]);
+  }, [open, report, reset, draftKey]);
+
+  const cancel = () => {
+    if (!report) clearDraft(draftKey);
+    onClose();
+  };
 
   const onSubmit = handleSubmit(async (v) => {
     const input = {
@@ -59,6 +75,7 @@ export function ReportFormSheet({ h, open, onClose, report, onCreated }: { h: Ho
       { success: t('maintenance.saved') },
     );
     if (r.ok) {
+      if (!report) clearDraft(draftKey);
       setPhotos([]);
       onClose();
       if (r.value) onCreated?.(r.value);
@@ -70,10 +87,11 @@ export function ReportFormSheet({ h, open, onClose, report, onCreated }: { h: Ho
       open={open}
       onClose={onClose}
       title={report ? t('maintenance.editReport') : t('maintenance.newReport')}
+      description={restored ? t('maintenance.draftRestored') : undefined}
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>
-            {t('common.cancel')}
+          <Button variant="secondary" onClick={cancel}>
+            {restored ? t('maintenance.discardDraft') : t('common.cancel')}
           </Button>
           <Button type="submit" form="report-form" loading={formState.isSubmitting} disabled={!h.canWrite}>
             {t('common.save')}

@@ -12,7 +12,8 @@ import type { MaintenanceReport } from '@/domain/types';
 import { useHousehold } from '@/hooks/useHousehold';
 import { features } from '@/config/features';
 import { ReportDetailSheet } from './ReportDetailSheet';
-import { ReportFormSheet } from './ReportFormSheet';
+import { readDraft } from '@/hooks/useFormDraft';
+import { ReportFormSheet, reportDraftKey } from './ReportFormSheet';
 import { PRIORITY_TONE, STATUS_TONE } from './tones';
 
 const PRIORITY_ORDER = { urgent: 0, high: 1, medium: 2, low: 3 } as const;
@@ -21,7 +22,11 @@ export default function MaintenancePage() {
   const { t } = useTranslation();
   const h = useHousehold();
   const [filter, setFilter] = useState<'open' | 'closed'>('open');
-  const [formOpen, setFormOpen] = useState(false);
+  // reopen a report that was being written when the phone killed the app
+  const [formOpen, setFormOpen] = useState(() => {
+    const draft = readDraft<{ title?: string; description?: string }>(reportDraftKey(h.snap.apartment.id));
+    return Boolean(draft?.title?.trim() || draft?.description?.trim());
+  });
   const [editing, setEditing] = useState<MaintenanceReport | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
 

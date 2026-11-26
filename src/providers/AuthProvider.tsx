@@ -42,7 +42,13 @@ function makeRepository(mode: DataMode): Repository {
 export function AuthProvider({ children, repository }: { children: ReactNode; repository?: Repository }) {
   const [mode, setMode] = useState<DataMode>(() => repository?.mode ?? initialMode());
   const [repo, setRepo] = useState<Repository>(() => repository ?? makeRepository(mode));
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const [user, setUserState] = useState<SessionUser | null>(null);
+  // Keep the SAME object while it is the same person. Supabase refreshes the session when the app
+  // comes back from the background (screen unlock, camera…); treating that as a new user used to
+  // reset the whole app and wipe forms in progress.
+  const setUser = useCallback((next: SessionUser | null) => {
+    setUserState((prev) => (prev && next && prev.id === next.id && prev.email === next.email ? prev : next));
+  }, []);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
@@ -73,7 +79,7 @@ export function AuthProvider({ children, repository }: { children: ReactNode; re
       cancelled = true;
       unsubscribe();
     };
-  }, [repo]);
+  }, [repo, setUser]);
 
   const refreshProfile = useCallback(async () => {
     if (!user) return setProfile(null);
@@ -107,7 +113,7 @@ export function AuthProvider({ children, repository }: { children: ReactNode; re
       r.signInAs(demoUserId);
       setUser(await r.getSession());
     },
-    [mode, repo, switchMode],
+    [mode, repo, switchMode, setUser],
   );
 
   const exitDemo = useCallback(async () => {
@@ -115,7 +121,7 @@ export function AuthProvider({ children, repository }: { children: ReactNode; re
     setUser(null);
     setProfile(null);
     if (env.supabaseConfigured) switchMode('supabase');
-  }, [mode, repo, switchMode]);
+  }, [mode, repo, switchMode, setUser]);
 
   const resetDemo = useCallback(() => {
     if (repo instanceof DemoRepository) repo.reset();
@@ -127,7 +133,7 @@ export function AuthProvider({ children, repository }: { children: ReactNode; re
     await repo.signOut();
     setUser(null);
     setProfile(null);
-  }, [mode, repo, exitDemo]);
+  }, [mode, repo, exitDemo, setUser]);
 
   const value = useMemo<AuthState>(
     () => ({ repo, mode, user, profile, initializing, passwordRecovery, enterDemo, exitDemo, resetDemo, signOut, refreshProfile }),
